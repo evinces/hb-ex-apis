@@ -46,8 +46,18 @@ def find_afterparties():
         # - (Make sure to save the JSON data from the response to the data
         #   variable so that it can display on the page as well.)
 
-        data = {'This': ['Some', 'mock', 'JSON']}
-        events = []
+        payload = {"token": os.environ["EVENTBRITE_TOKEN"],
+                   "q": query,
+                   "location.address": location,
+                   "location.within": distance,
+                   "sort_by": sort,
+                   }
+
+        r = requests.get("https://www.eventbriteapi.com/v3/events/search/",
+                         params=payload)
+
+        data = r.json()
+        events = data["events"]
 
         return render_template("afterparties.html",
                                data=pformat(data),
@@ -79,19 +89,31 @@ def create_eventbrite_event():
     timezone = request.form.get('timezone')
     currency = request.form.get('currency')
 
+    payload = {"token": os.environ["EVENTBRITE_TOKEN"],
+               "event.name.html": name,
+               "event.start.utc": start_time,
+               "event.start.timezone": timezone,
+               "event.end.utc": end_time,
+               "event.end.timezone": timezone,
+               "event.currency": currency,
+               }
+
+    response = requests.post("https://www.eventbriteapi.com/v3/events/",
+                             params=payload)
+
     # TODO: Create my event!
 
-    # - Make a request to the Eventbrite API to create a new event using the
+    # - DONE! - Make a request to the Eventbrite API to create a new event using the
     # form data.
-    # - Flash add the created event's URL as a link to the success flash message
+    #
+    # - TODO - Flash add the created event's URL as a link to the success flash message
 
-    ##### UNCOMMENT THIS once you make your request! #####
-    # if response.ok:
-    #     flash("Your event was created!")
-    #     return redirect("/")
-    # else:
-    #     flash("Error: " + response.json()['error_description'])
-    #     return redirect("/create-event")
+    if response.ok:
+        flash("Your event was created!")
+        return redirect("/")
+    else:
+        flash("Error: " + response.json()['error_description'])
+        return redirect("/create-event")
 
     return redirect("/")
 
